@@ -6,5 +6,5 @@ export function loader() {
 }
 
 export async function action({ request }: ActionFunctionArgs) {
-  return authenticator.authenticate('okta', request);
+  return await authenticator.authenticate('okta', request);
 }

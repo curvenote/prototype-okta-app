@@ -1,17 +1,17 @@
-import { json, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { authenticator } from '../backend/auth.server';
+import { json, redirect, type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
+import { sessionStorage } from '~/backend/session.server';
 
 export const meta: MetaFunction = () => {
   return [{ title: 'New Remix App' }, { name: 'description', content: 'Welcome to Remix!' }];
 };
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const data = await authenticator.isAuthenticated(request, {
-    failureRedirect: '/login',
-  });
+  const session = await sessionStorage.getSession(request.headers.get('Cookie'));
+  const user = session.get('user');
+  if (!user) throw redirect('/login');
 
-  return data ? json(data) : null;
+  return user ? json(user) : null;
 }
 
 export default function Index() {
@@ -19,10 +19,10 @@ export default function Index() {
   const data = useLoaderData() as { displayName: string; email: string; provider: string };
   const { displayName, email, provider } = data;
   return (
-    <div className="font-sans p-16 flex justify-center w-full">
+    <div className="flex justify-center w-full p-16 font-sans">
       <div className="w-10/12 space-y-6">
         <h1 className="text-3xl">
-          Welcome <span className="text-green-700 font-semibold">{displayName}</span>!
+          Welcome <span className="font-semibold text-green-700">{displayName}</span>!
         </h1>
         <div>Your Stuff</div>
         <p>
@@ -34,7 +34,7 @@ export default function Index() {
         </div>
         <div>
           <form method="post" action="/logout">
-            <button className="py-1 px-2 rounded border border-black" type="submit">
+            <button className="px-2 py-1 border border-black rounded" type="submit">
               logout
             </button>
           </form>
